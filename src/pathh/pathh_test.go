@@ -1,7 +1,6 @@
 package pathh
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -10,12 +9,12 @@ import (
 
 // setUp function, add a number to numbers slice
 func setUp() {
-	fmt.Printf("setUp tests\n")
+	//fmt.Printf("Setup tests\n")
 }
 
 // tearDown function, delete a number to numbers slice
 func tearDown() {
-	fmt.Printf("TEARDOWN\n")
+	//fmt.Printf("Teardown\n")
 }
 
 func TestMain(m *testing.M) {
@@ -44,6 +43,16 @@ func TestIsRemote(t *testing.T) {
 
 	p = New("user@server:.")
 	assert.Equal(t, p.IsRemote(), true)
+}
+
+func TestIsLocal(t *testing.T) {
+
+	p := New("localFile")
+	//assert.Nil(t, err)
+	assert.Equal(t, p.IsLocal(), true)
+	p = New("user@server")
+	assert.Equal(t, p.IsLocal(), false)
+
 }
 
 func TestGetUser(t *testing.T) {
