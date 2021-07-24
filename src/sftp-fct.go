@@ -72,6 +72,14 @@ func uploadFile(client *sftp.Client, localFile, remoteFile string) (err error) {
 		client.Mkdir(path)
 	}
 
+	// If remoteFile is a dir ...
+	infoRemote, err := client.Stat(remoteFile)
+	if err == nil {
+		if infoRemote.IsDir() {
+			remoteFile = remoteFile + "/" + filepath.Base(localFile)
+		}
+	}
+
 	dstFile, err := client.OpenFile(remoteFile, (os.O_WRONLY | os.O_CREATE | os.O_TRUNC))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to open remote file: %v\n", err)
