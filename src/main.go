@@ -66,10 +66,6 @@ func main() {
 	flag.Parse()
 	initTrace(debugLevel)
 
-	// fmt.Println(len(os.Args))
-	// fmt.Println(flag.NArg())
-	// fmt.Println(flag.Args())
-
 	if vOption {
 		printVersion()
 		os.Exit(0)
@@ -88,10 +84,10 @@ func main() {
 		fmt.Println("Cannot transfer from one server to the other")
 		os.Exit(1)
 	}
-	// if src.IsLocal() && dest.IsLocal() {
-	// 	fmt.Println("Use cp ...")
-	// 	os.Exit(1)
-	// }
+	if src.IsLocal() && dest.IsLocal() {
+		fmt.Println("Use cp ...")
+		os.Exit(1)
+	}
 	// fmt.Println("==", os.Args[2])
 	// fmt.Println("==", dest.GetServer())
 
@@ -140,7 +136,7 @@ func main() {
 	}
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create client: %s\n", err.Error())
+		fmt.Fprintf(os.Stderr, "Failed : %s\n", err.Error())
 		os.Exit(1)
 	}
 }
