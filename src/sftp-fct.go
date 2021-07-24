@@ -119,7 +119,7 @@ func downloadFile(client *sftp.Client, remoteFile, localFile string) (err error)
 	return
 }
 
-func SftpConnect(remote pathh.Path, sshkeyFile string) (*sftp.Client, error) {
+func SftpConnect(remote pathh.Path, port string, sshkeyFile string) (*sftp.Client, error) {
 
 	auth := PublicKeyFile(sshkeyFile)
 	if auth == nil {
@@ -134,7 +134,7 @@ func SftpConnect(remote pathh.Path, sshkeyFile string) (*sftp.Client, error) {
 		Timeout:         2 * time.Second,
 	}
 
-	conn, err := ssh.Dial("tcp", remote.GetServer()+":22", &sshConfig)
+	conn, err := ssh.Dial("tcp", remote.GetServer()+":"+port, &sshConfig)
 	if err != nil {
 		panic("Failed to dial: " + err.Error())
 	}

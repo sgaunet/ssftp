@@ -57,9 +57,11 @@ func main() {
 	// Arguments
 	var sshkeyFile string
 	var debugLevel string
+	var port string
 	var vOption bool
 	flag.StringVar(&sshkeyFile, "i", "", "SSH key File")
 	flag.StringVar(&debugLevel, "d", "debug", "Debug level (info,warn,debug)")
+	flag.StringVar(&port, "p", "22", "Port number")
 	flag.BoolVar(&vOption, "v", false, "Get version")
 	flag.Parse()
 	initTrace(debugLevel)
@@ -110,10 +112,10 @@ func main() {
 	// }
 
 	if src.IsRemote() {
-		client, err = SftpConnect(src, sshkeyFile)
+		client, err = SftpConnect(src, port, sshkeyFile)
 	}
 	if dest.IsRemote() {
-		client, err = SftpConnect(dest, sshkeyFile)
+		client, err = SftpConnect(dest, port, sshkeyFile)
 	}
 
 	if err != nil {
