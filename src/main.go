@@ -128,7 +128,18 @@ func main() {
 
 	if src.IsRemote() {
 		fmt.Println("DOWNLOAD")
-		err = downloadFile(client, src.GetFilePath(), dest.GetFilePath())
+		is, err := IsRemoteFileADir(client, "/tmp")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed : %s\n", err.Error())
+			os.Exit(1)
+		}
+
+		if is {
+			fmt.Println("Resursive download")
+			err = recursiveDownload(client, src.GetFilePath(), dest.GetFilePath())
+		} else {
+			err = downloadFile(client, src.GetFilePath(), dest.GetFilePath())
+		}
 	}
 
 	if dest.IsRemote() {

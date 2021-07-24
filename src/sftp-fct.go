@@ -110,6 +110,19 @@ func downloadFile(client *sftp.Client, remoteFile, localFile string) (err error)
 	}
 	defer srcFile.Close()
 
+	// Check if dir exists
+	//dirLocalFile := filepath.Dir(localFile)
+	dir := filepath.Dir(localFile)
+	if _, err := os.Stat(dir); err != nil {
+		if os.IsNotExist(err) {
+			fmt.Println("CREATE :", dir)
+			os.Mkdir(dir, 0755)
+		} else {
+			// other error
+			fmt.Fprint(os.Stderr, err.Error())
+		}
+	}
+
 	dstFile, err := os.Create(localFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to open local file: %v\n", err)
@@ -152,4 +165,40 @@ func SftpConnect(remote pathh.Path, port string, sshkeyFile string) (*sftp.Clien
 	}
 
 	return client, err
+}
+
+func IsRemoteFileADir(client *sftp.Client, remoteFile string) (bool, error) {
+
+	info, err := client.Stat(remoteFile)
+	if err != nil {
+		return false, err
+	}
+	if info.IsDir() {
+		return true, err
+	}
+	return false, err
+}
+
+func recursiveDownload(client *sftp.Client, remoteFile string, localFile string) (err error) {
+	files, err := client.ReadDir(remoteFile)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to list remote dir: %v\n", err)
+		return
+	}
+
+	for _, f := range files {
+		var name string
+		name = f.Name()
+
+		if f.IsDir() {
+			name = name + "/"
+			return recursiveDownload(client, remoteFile+string(os.PathSeparator)+name, localFile+string(os.PathSeparator)+name)
+		}
+		err = downloadFile(client, remoteFile+string(os.PathSeparator)+name, localFile+string(os.PathSeparator)+name)
+		if err != nil {
+			return
+		}
+	}
+
+	return
 }
