@@ -7,7 +7,8 @@ tstDir=$(pwd)
 
 projectWorkdir=$(dirname $tstDir)
 
-echo "Hello" > /tmp/toto
+echo "Create /tmp/toto (100 MB with random data)"
+dd if=/dev/urandom of=/tmp/toto  bs=1024 count=102400
 
 
 cd "$projectWorkdir/src"
@@ -22,7 +23,7 @@ then
     exit 1
 fi
 
-go run . -i ${projectWorkdir}/tst/.vagrant/machines/ex-0/virtualbox/private_key  vagrant@10.0.50.10:toto /tmp/toto
+go run . -i ${projectWorkdir}/tst/.vagrant/machines/ex-0/virtualbox/private_key  vagrant@10.0.50.10:/tmp/toto /tmp/toto
 rc=$?
 
 if [ "$rc" != "0" ]
