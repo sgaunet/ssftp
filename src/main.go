@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/pkg/sftp"
 
@@ -132,7 +133,32 @@ func main() {
 
 	if dest.IsRemote() {
 		fmt.Println("UPLOAD")
-		err = uploadFile(client, src.GetFilePath(), dest.GetFilePath())
+		infoLocalFile, err := os.Stat(src.GetFilePath())
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed : %s\n", err.Error())
+			os.Exit(1)
+		}
+
+		if infoLocalFile.IsDir() {
+			err := filepath.Walk(src.GetFilePath(),
+				func(path string, info os.FileInfo, err error) error {
+					if err != nil {
+						return err
+					}
+					if !info.IsDir() {
+						baseDirSrc := filepath.Base(src.GetFilePath())
+						completeRemotePath := filepath.Clean(dest.GetFilePath() + string(os.PathSeparator) + baseDirSrc + string(os.PathSeparator) + path[len(src.GetFilePath()):])
+						fmt.Printf("Upload to : %s (size %v)\n", completeRemotePath, info.Size())
+						return uploadFile(client, path, completeRemotePath)
+					}
+					return nil
+				})
+			if err != nil {
+				log.Errorln(err)
+			}
+		} else {
+			err = uploadFile(client, src.GetFilePath(), dest.GetFilePath())
+		}
 	}
 
 	if err != nil {
