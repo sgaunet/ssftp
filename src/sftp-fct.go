@@ -54,11 +54,11 @@ func listFiles(client *sftp.Client, remoteDir string) (err error) {
 
 // Upload file to sftp server
 func uploadFile(client *sftp.Client, localFile, remoteFile string) (err error) {
-	fmt.Fprintf(os.Stdout, "Uploading [%s] to [%s] ...\n", localFile, remoteFile)
+	fmt.Fprintf(os.Stdout, "Uploading [%s] to [%s] ... ", localFile, remoteFile)
 
 	srcFile, err := os.Open(localFile)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to open local file: %v\n", err)
+		fmt.Fprintf(os.Stderr, "\nUnable to open local file: %v\n", err)
 		return
 	}
 	defer srcFile.Close()
@@ -82,17 +82,17 @@ func uploadFile(client *sftp.Client, localFile, remoteFile string) (err error) {
 
 	dstFile, err := client.OpenFile(remoteFile, (os.O_WRONLY | os.O_CREATE | os.O_TRUNC))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to open remote file: %v\n", err)
+		fmt.Fprintf(os.Stderr, "\nUnable to open remote file: %v\n", err)
 		return
 	}
 	defer dstFile.Close()
 
 	bytes, err := io.Copy(dstFile, srcFile)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to upload local file: %v\n", err)
+		fmt.Fprintf(os.Stderr, "\nUnable to upload local file: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Fprintf(os.Stdout, "%d bytes copied\n", bytes)
+	fmt.Fprintf(os.Stdout, "(%d bytes copied)\n", bytes)
 
 	return
 }
@@ -100,22 +100,21 @@ func uploadFile(client *sftp.Client, localFile, remoteFile string) (err error) {
 // Download file from sftp server
 func downloadFile(client *sftp.Client, remoteFile, localFile string) (err error) {
 
-	fmt.Fprintf(os.Stdout, "Downloading [%s] to [%s] ...\n", remoteFile, localFile)
+	fmt.Fprintf(os.Stdout, "Downloading [%s] to [%s] ... ", remoteFile, localFile)
 
 	// Note: SFTP To Go doesn't support O_RDWR mode
 	srcFile, err := client.OpenFile(remoteFile, (os.O_RDONLY))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to open remote file: %v\n", err)
+		fmt.Fprintf(os.Stderr, "\nUnable to open remote file: %v\n", err)
 		return
 	}
 	defer srcFile.Close()
 
 	// Check if dir exists
-	//dirLocalFile := filepath.Dir(localFile)
 	dir := filepath.Dir(localFile)
 	if _, err := os.Stat(dir); err != nil {
 		if os.IsNotExist(err) {
-			fmt.Println("CREATE :", dir)
+			//fmt.Println("CREATE :", dir)
 			os.Mkdir(dir, 0755)
 		} else {
 			// other error
@@ -125,17 +124,17 @@ func downloadFile(client *sftp.Client, remoteFile, localFile string) (err error)
 
 	dstFile, err := os.Create(localFile)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to open local file: %v\n", err)
+		fmt.Fprintf(os.Stderr, "\nUnable to open local file: %v\n", err)
 		return
 	}
 	defer dstFile.Close()
 
 	bytes, err := io.Copy(dstFile, srcFile)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to download remote file: %v\n", err)
-		os.Exit(1)
+		fmt.Fprintf(os.Stderr, "\nUnable to download remote file: %v\n", err)
+		return
 	}
-	fmt.Fprintf(os.Stdout, "%d bytes copied\n", bytes)
+	fmt.Fprintf(os.Stdout, "(%d bytes copied)w\n", bytes)
 
 	return
 }
