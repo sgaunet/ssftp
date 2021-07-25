@@ -61,7 +61,7 @@ func main() {
 	var port string
 	var vOption bool
 	flag.StringVar(&sshkeyFile, "i", "", "SSH key File")
-	flag.StringVar(&debugLevel, "d", "debug", "Debug level (info,warn,debug)")
+	flag.StringVar(&debugLevel, "d", "info", "Debug level (info,warn,debug)")
 	flag.StringVar(&port, "p", "22", "Port number")
 	flag.BoolVar(&vOption, "v", false, "Get version")
 	flag.Parse()
@@ -70,6 +70,12 @@ func main() {
 	if vOption {
 		printVersion()
 		os.Exit(0)
+	}
+
+	if debugLevel != "info" && debugLevel != "warn" && debugLevel != "debug" {
+		fmt.Fprintf(os.Stderr, "debuglevel should be info or warn or debug\n")
+		usage()
+		os.Exit(1)
 	}
 
 	if len(flag.Args()) != 2 {
