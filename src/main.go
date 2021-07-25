@@ -134,7 +134,7 @@ func main() {
 	// println("Current working directory:", cwd)
 
 	if src.IsRemote() {
-		is, err := IsRemoteFileADir(client, "/tmp")
+		is, err := IsRemoteFileADir(client, src.GetFilePath())
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed : %s\n", err.Error())
 			os.Exit(1)
@@ -166,7 +166,7 @@ func main() {
 					if !info.IsDir() {
 						baseDirSrc := filepath.Base(src.GetFilePath()) // dirname of source
 						completeRemotePath := filepath.Clean(dest.GetFilePath() + string(os.PathSeparator) + baseDirSrc + string(os.PathSeparator) + path[len(src.GetFilePath()):])
-						fmt.Printf("Upload to : %s (size %v)\n", completeRemotePath, info.Size())
+						// fmt.Printf("Upload to : %s (size %v)\n", completeRemotePath, info.Size())
 						return uploadFile(client, path, completeRemotePath)
 					}
 					return nil
