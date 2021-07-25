@@ -60,6 +60,7 @@ func main() {
 	var debugLevel string
 	var port string
 	var vOption bool
+	// Parameters treatment (except src + dest)
 	flag.StringVar(&sshkeyFile, "i", "", "SSH key File")
 	flag.StringVar(&debugLevel, "d", "info", "Debug level (info,warn,debug)")
 	flag.StringVar(&port, "p", "22", "Port number")
@@ -78,26 +79,27 @@ func main() {
 		os.Exit(1)
 	}
 
+	// src + dest are mandatory parameters
 	if len(flag.Args()) != 2 {
 		usage()
 		os.Exit(0)
 	}
 
+	// Parameters treatment : src + dest
 	args := flag.Args()
 	src := pathh.New(args[0])
 	dest := pathh.New(args[1])
 
 	if src.IsRemote() && dest.IsRemote() {
-		fmt.Println("Cannot transfer from one server to the other")
+		fmt.Fprintf(os.Stderr, "Cannot transfer from one server to the other\n")
 		os.Exit(1)
 	}
 	if src.IsLocal() && dest.IsLocal() {
-		fmt.Println("Use cp ...")
+		fmt.Fprintf(os.Stderr, "Use cp instead\n")
 		os.Exit(1)
 	}
-	// fmt.Println("==", os.Args[2])
-	// fmt.Println("==", dest.GetServer())
 
+	// ssh key is mandatory for the first version
 	if len(sshkeyFile) == 0 {
 		fmt.Println("No SSH file")
 		os.Exit(1)
@@ -130,10 +132,8 @@ func main() {
 	defer client.Close()
 	// cwd, err := client.Getwd()
 	// println("Current working directory:", cwd)
-	// listFiles(client, "/")
 
 	if src.IsRemote() {
-		fmt.Println("DOWNLOAD")
 		is, err := IsRemoteFileADir(client, "/tmp")
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed : %s\n", err.Error())
@@ -141,7 +141,6 @@ func main() {
 		}
 
 		if is {
-			fmt.Println("Resursive download")
 			err = recursiveDownload(client, src.GetFilePath(), dest.GetFilePath())
 		} else {
 			err = downloadFile(client, src.GetFilePath(), dest.GetFilePath())
@@ -149,21 +148,23 @@ func main() {
 	}
 
 	if dest.IsRemote() {
-		fmt.Println("UPLOAD")
+		// Need info on localpath
 		infoLocalFile, err := os.Stat(src.GetFilePath())
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed : %s\n", err.Error())
 			os.Exit(1)
 		}
 
+		// If it's a directory, upload every files and keep the same tree
 		if infoLocalFile.IsDir() {
+			// walk throught the tree
 			err := filepath.Walk(src.GetFilePath(),
 				func(path string, info os.FileInfo, err error) error {
 					if err != nil {
 						return err
 					}
 					if !info.IsDir() {
-						baseDirSrc := filepath.Base(src.GetFilePath())
+						baseDirSrc := filepath.Base(src.GetFilePath()) // dirname of source
 						completeRemotePath := filepath.Clean(dest.GetFilePath() + string(os.PathSeparator) + baseDirSrc + string(os.PathSeparator) + path[len(src.GetFilePath()):])
 						fmt.Printf("Upload to : %s (size %v)\n", completeRemotePath, info.Size())
 						return uploadFile(client, path, completeRemotePath)
@@ -174,6 +175,7 @@ func main() {
 				log.Errorln(err)
 			}
 		} else {
+			// localpath is a simple file, upload it
 			err = uploadFile(client, src.GetFilePath(), dest.GetFilePath())
 		}
 	}
