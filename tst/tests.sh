@@ -74,7 +74,7 @@ then
 fi
 
 echo -e "\n\n# Test 6 : recursive download /tmp/src to /tmp"
-go run . -i ${projectWorkdir}/tst/.vagrant/machines/ex-0/virtualbox/private_key   vagrant@10.0.50.10:/tmp/src /tmp/
+go run . -i ${projectWorkdir}/tst/.vagrant/machines/ex-0/virtualbox/private_key   vagrant@10.0.50.10:/tmp/src /tmp/src2
 rc=$?
 
 if [ "$rc" != "0" ]
@@ -83,5 +83,15 @@ then
     exit 1
 fi
 
-rm -rf /tmp/src
+echo -e "\n\n# Test 7 : Diff between src sent dir and the downloaded"
+diff -r ../src /tmp/src2
+rc=$?
+
+if [ "$rc" != "0" ]
+then
+    echo "TEST FAILED"
+    exit 1
+fi
+
+rm -rf /tmp/src2
 
