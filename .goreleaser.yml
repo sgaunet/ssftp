@@ -15,7 +15,6 @@ builds:
       - -X main.version={{.Version}}
     goos:
       - linux
-      - windows
       - darwin
     goarch:
       - amd64
@@ -24,6 +23,19 @@ builds:
     hooks:
       post:
         - upx "{{ .Path }}"
+  - env:
+      - CGO_ENABLED=0
+    dir: src
+    id: ssftp-win
+    ldflags:
+      - -X main.version={{.Version}}
+    goos:
+      - windows
+    goarch:
+      - amd64
+      - arm
+      - arm64
+    
 archives:
   - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
     replacements:
