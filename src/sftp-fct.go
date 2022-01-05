@@ -153,6 +153,8 @@ func SftpConnect(remote pathh.Path, port string, sshkeyFile string) (*sftp.Clien
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Timeout:         2 * time.Second,
 	}
+	// cipherOrder := sshConfig.Ciphers
+	//sshconfig.Ciphers = append(cipherOrder, "3des-cbc")
 
 	conn, err := ssh.Dial("tcp", remote.GetServer()+":"+port, &sshConfig)
 	if err != nil {
