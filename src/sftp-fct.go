@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -102,7 +103,6 @@ func downloadFile(client *sftp.Client, remoteFile, localFile string) (err error)
 
 	fmt.Fprintf(os.Stdout, "Downloading [%s] to [%s] ... ", remoteFile, localFile)
 
-	// Note: SFTP To Go doesn't support O_RDWR mode
 	srcFile, err := client.OpenFile(remoteFile, (os.O_RDONLY))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "\nUnable to open remote file: %v\n", err)
@@ -184,6 +184,7 @@ func recursiveDownload(client *sftp.Client, remoteFile string, localFile string)
 	files, err := client.ReadDir(remoteFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to list remote dir: %v\n", err)
+		err = errors.New("error during the recursive download")
 		return
 	}
 
@@ -193,11 +194,15 @@ func recursiveDownload(client *sftp.Client, remoteFile string, localFile string)
 
 		if f.IsDir() {
 			name = name + "/"
-			return recursiveDownload(client, remoteFile+string(os.PathSeparator)+name, localFile+string(os.PathSeparator)+name)
-		}
-		err = downloadFile(client, remoteFile+string(os.PathSeparator)+name, localFile+string(os.PathSeparator)+name)
-		if err != nil {
-			return
+			err2 := recursiveDownload(client, remoteFile+string(os.PathSeparator)+name, localFile+string(os.PathSeparator)+name)
+			if err2 != nil {
+				err = errors.New("error during the recursive download")
+			}
+		} else {
+			err = downloadFile(client, remoteFile+string(os.PathSeparator)+name, localFile+string(os.PathSeparator)+name)
+			if err != nil {
+				err = errors.New("error during the recursive download")
+			}
 		}
 	}
 
