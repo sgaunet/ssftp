@@ -55,7 +55,8 @@ func listFiles(client *sftp.Client, remoteDir string) (err error) {
 
 // Upload file to sftp server
 func uploadFile(client *sftp.Client, localFile, remoteFile string) (err error) {
-	fmt.Fprintf(os.Stdout, "Uploading [%s] to [%s] ... ", localFile, remoteFile)
+	log.Infof("Uploading [%s] to [%s] ...\n", localFile, remoteFile)
+	log.Debugln("remoteFile=", remoteFile)
 	srcFile, err := os.Open(localFile)
 	if err != nil {
 		return errors.New("Unable to open local file" + localFile + " : " + err.Error())
@@ -63,14 +64,25 @@ func uploadFile(client *sftp.Client, localFile, remoteFile string) (err error) {
 	defer srcFile.Close()
 
 	// Make remote directories recursion
-	parent := filepath.Dir(remoteFile)
+	parent := strings.ReplaceAll(filepath.Dir(remoteFile), "\\", "/")
+	log.Debugln("parent=", parent)
 	pathSeparator := string("/")
-	dirs := strings.Split(parent, string(os.PathSeparator))
+	dirs := strings.Split(parent, string(pathSeparator))
 	remotepath := ""
-	for _, dir := range dirs {
-		remotepath = remotepath + pathSeparator + dir
-		client.Mkdir(remotepath)
-		log.Infoln("Create remote dir :", remotepath)
+	if len(dirs) == 1 {
+		remotepath = parent
+		log.Debugln("remotepath=", remotepath)
+		client.Mkdir(remotepath) // should handle the error
+	} else {
+		for _, dir := range dirs {
+			log.Debugln("dir=", dir)
+			remotepath = strings.ReplaceAll(remotepath+pathSeparator+dir, "\\", "/")
+			remotepath = strings.ReplaceAll(remotepath, "//", "/")
+			log.Debugln("remotepath=", remotepath)
+			client.Mkdir(remotepath) // should handle the error
+
+			// log.Infoln("Create remote dir :", remotepath)
+		}
 	}
 
 	// If remoteFile is a dir ...

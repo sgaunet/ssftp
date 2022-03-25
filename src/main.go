@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/pkg/sftp"
 
@@ -77,7 +76,7 @@ func main() {
 	}
 
 	if debugLevel != "info" && debugLevel != "warn" && debugLevel != "debug" {
-		fmt.Fprintf(os.Stderr, "debuglevel should be info or warn or debug\n")
+		log.Errorf("debuglevel should be info or warn or debug\n")
 		usage()
 		os.Exit(1)
 	}
@@ -95,17 +94,17 @@ func main() {
 	dest := pathh.New(args[1])
 
 	if src.IsRemote() && dest.IsRemote() {
-		fmt.Fprintf(os.Stderr, "Cannot transfer from one server to the other\n")
+		log.Errorf("Cannot transfer from one server to the other\n")
 		os.Exit(1)
 	}
 	if src.IsLocal() && dest.IsLocal() {
-		fmt.Fprintf(os.Stderr, "Use cp instead\n")
+		log.Errorf("Use cp instead\n")
 		os.Exit(1)
 	}
 
 	// ssh key is mandatory for the first version
 	if len(sshkeyFile) == 0 {
-		fmt.Println("No SSH file")
+		log.Errorln("No SSH file")
 		os.Exit(1)
 	}
 
@@ -128,7 +127,7 @@ func main() {
 	}
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to connect: %s\n", err.Error())
+		log.Errorf("Failed to connect: %s\n", err.Error())
 		os.Exit(1)
 	}
 
@@ -138,23 +137,31 @@ func main() {
 	// println("Current working directory:", cwd)
 
 	if src.IsRemote() {
+		var isRemote bool
 		log.Debugln("src is remote")
-		is, err := IsRemoteFileADir(client, src.GetFilePath())
+		isRemote, err = IsRemoteFileADir(client, src.GetFilePath())
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed : %s\n", err.Error())
 			os.Exit(1)
 		}
 
-		if is {
+		if isRemote {
 			err = recursiveDownload(client, src.GetFilePath(), dest.GetFilePath())
+			if err != nil {
+				log.Errorf("Failed to recursive download : %s\n", err.Error())
+				os.Exit(1)
+			}
 		} else {
 			err = downloadFile(client, src.GetFilePath(), dest.GetFilePath())
+			if err != nil {
+				log.Errorf("Failed to download file %s : %s\n", src.GetFilePath(), err.Error())
+				os.Exit(1)
+			}
 		}
 	}
 
 	if dest.IsRemote() {
 		log.Debugln("dest is remote")
-
 		// Need info on localpath
 		infoLocalFile, err := os.Stat(src.GetFilePath())
 		if err != nil {
@@ -165,15 +172,17 @@ func main() {
 		// If it's a directory, upload every files and keep the same tree
 		if infoLocalFile.IsDir() {
 			// walk throught the tree
-			err := filepath.Walk(src.GetFilePath(),
+			err = filepath.Walk(src.GetFilePath(),
 				func(path string, info os.FileInfo, err error) error {
 					if err != nil {
 						return errors.New("problem with local file " + path + " : " + err.Error())
 					}
 					if !info.IsDir() {
-						baseDirSrc := filepath.Base(src.GetFilePath()) // dirname of source
-						completeRemotePath := filepath.Clean(dest.GetFilePath() + "/" + baseDirSrc + "/" + path[len(src.GetFilePath()):])
-						completeRemotePath = strings.ReplaceAll(completeRemotePath, string(os.PathSeparator), "/")
+						// ssftp ...  localdir  user@server:/abso
+						// ssftp ...  ./localdir  user@server:/abso
+						// baseDirSrc := filepath.Base(src.GetFilePath()) // dirname of source
+						completeRemotePath := filepath.Clean(dest.GetFilePath() + "/" + filepath.Base(src.GetFilePath()) + "/" + path[len(src.GetFilePath()):])
+						completeRemotePath = filepath.ToSlash(completeRemotePath)
 						log.Infof("Upload to : %s (size %v)\n", completeRemotePath, info.Size())
 						return uploadFile(client, path, completeRemotePath)
 					}
@@ -185,11 +194,10 @@ func main() {
 		} else {
 			// localpath is a simple file, upload it
 			err = uploadFile(client, src.GetFilePath(), dest.GetFilePath())
+			if err != nil {
+				log.Errorf("Failed to upload file %s : %s\n", src.GetFilePath(), err.Error())
+				os.Exit(1)
+			}
 		}
-	}
-
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed : %s\n", err.Error())
-		os.Exit(1)
 	}
 }
