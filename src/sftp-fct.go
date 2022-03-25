@@ -56,21 +56,21 @@ func listFiles(client *sftp.Client, remoteDir string) (err error) {
 // Upload file to sftp server
 func uploadFile(client *sftp.Client, localFile, remoteFile string) (err error) {
 	fmt.Fprintf(os.Stdout, "Uploading [%s] to [%s] ... ", localFile, remoteFile)
-
 	srcFile, err := os.Open(localFile)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "\nUnable to open local file: %v\n", err)
-		return
+		return errors.New("Unable to open local file" + localFile + " : " + err.Error())
 	}
 	defer srcFile.Close()
 
 	// Make remote directories recursion
 	parent := filepath.Dir(remoteFile)
-	path := string(filepath.Separator)
-	dirs := strings.Split(parent, path)
+	pathSeparator := string("/")
+	dirs := strings.Split(parent, string(os.PathSeparator))
+	remotepath := ""
 	for _, dir := range dirs {
-		path = filepath.Join(path, dir)
-		client.Mkdir(path)
+		remotepath = remotepath + pathSeparator + dir
+		client.Mkdir(remotepath)
+		log.Infoln("Create remote dir :", remotepath)
 	}
 
 	// If remoteFile is a dir ...
@@ -84,7 +84,7 @@ func uploadFile(client *sftp.Client, localFile, remoteFile string) (err error) {
 	dstFile, err := client.OpenFile(remoteFile, (os.O_WRONLY | os.O_CREATE | os.O_TRUNC))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "\nUnable to open remote file: %v\n", err)
-		return
+		return errors.New("unable to open remote file " + remoteFile + ":" + err.Error())
 	}
 	defer dstFile.Close()
 

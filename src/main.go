@@ -1,16 +1,20 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/sftp"
 
 	"github.com/sgaunet/ssftp/pathh"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
+
+var log = logrus.New()
 
 func initTrace(debugLevel string) {
 	// Log as JSON instead of the default ASCII formatter.
@@ -26,13 +30,13 @@ func initTrace(debugLevel string) {
 
 	switch debugLevel {
 	case "info":
-		log.SetLevel(log.InfoLevel)
+		log.SetLevel(logrus.InfoLevel)
 	case "warn":
-		log.SetLevel(log.WarnLevel)
+		log.SetLevel(logrus.WarnLevel)
 	case "error":
-		log.SetLevel(log.ErrorLevel)
+		log.SetLevel(logrus.ErrorLevel)
 	default:
-		log.SetLevel(log.DebugLevel)
+		log.SetLevel(logrus.DebugLevel)
 	}
 }
 
@@ -66,7 +70,6 @@ func main() {
 	flag.StringVar(&port, "p", "22", "Port number")
 	flag.BoolVar(&vOption, "v", false, "Get version")
 	flag.Parse()
-	initTrace(debugLevel)
 
 	if vOption {
 		printVersion()
@@ -78,6 +81,7 @@ func main() {
 		usage()
 		os.Exit(1)
 	}
+	initTrace(debugLevel)
 
 	// src + dest are mandatory parameters
 	if len(flag.Args()) != 2 {
@@ -134,6 +138,7 @@ func main() {
 	// println("Current working directory:", cwd)
 
 	if src.IsRemote() {
+		log.Debugln("src is remote")
 		is, err := IsRemoteFileADir(client, src.GetFilePath())
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed : %s\n", err.Error())
@@ -148,6 +153,8 @@ func main() {
 	}
 
 	if dest.IsRemote() {
+		log.Debugln("dest is remote")
+
 		// Need info on localpath
 		infoLocalFile, err := os.Stat(src.GetFilePath())
 		if err != nil {
@@ -161,12 +168,13 @@ func main() {
 			err := filepath.Walk(src.GetFilePath(),
 				func(path string, info os.FileInfo, err error) error {
 					if err != nil {
-						return err
+						return errors.New("problem with local file " + path + " : " + err.Error())
 					}
 					if !info.IsDir() {
 						baseDirSrc := filepath.Base(src.GetFilePath()) // dirname of source
-						completeRemotePath := filepath.Clean(dest.GetFilePath() + string(os.PathSeparator) + baseDirSrc + string(os.PathSeparator) + path[len(src.GetFilePath()):])
-						// fmt.Printf("Upload to : %s (size %v)\n", completeRemotePath, info.Size())
+						completeRemotePath := filepath.Clean(dest.GetFilePath() + "/" + baseDirSrc + "/" + path[len(src.GetFilePath()):])
+						completeRemotePath = strings.ReplaceAll(completeRemotePath, string(os.PathSeparator), "/")
+						log.Infof("Upload to : %s (size %v)\n", completeRemotePath, info.Size())
 						return uploadFile(client, path, completeRemotePath)
 					}
 					return nil
