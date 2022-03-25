@@ -15,7 +15,7 @@ dd if=/dev/urandom of=/tmp/toto  bs=1024 count=102400
 
 echo -e "\n\n# Test : upload a file"
 cd "$projectWorkdir/src"
-go run . -i ${projectWorkdir}/tst/.vagrant/machines/ex-0/virtualbox/private_key /tmp/toto vagrant@10.0.50.10:/tmp/toto
+go run . -i ${projectWorkdir}/tst/.vagrant/machines/ex-0/virtualbox/private_key /tmp/toto vagrant@192.168.56.2:/tmp/toto
 rc=$?
 
 if [ "$rc" != "0" ]
@@ -26,12 +26,12 @@ fi
 
 echo -e "\n\n# Test 2: upload a file to a dir of the same name"
 ssh -i ${projectWorkdir}/tst/.vagrant/machines/ex-0/virtualbox/private_key \
-     vagrant@10.0.50.10 'rm /tmp/toto' 
+     vagrant@192.168.56.2 'rm /tmp/toto' 
 echo $?
 ssh -i ${projectWorkdir}/tst/.vagrant/machines/ex-0/virtualbox/private_key \
-     vagrant@10.0.50.10 'mkdir /tmp/toto'
+     vagrant@192.168.56.2 'mkdir /tmp/toto'
 echo $?
-go run . -i ${projectWorkdir}/tst/.vagrant/machines/ex-0/virtualbox/private_key /tmp/toto vagrant@10.0.50.10:/tmp/toto
+go run . -i ${projectWorkdir}/tst/.vagrant/machines/ex-0/virtualbox/private_key /tmp/toto vagrant@192.168.56.2:/tmp/toto
 rc=$?
 
 rm /tmp/toto
@@ -43,7 +43,7 @@ then
 fi
 
 echo -e "\n\n# Test 3 : Download the file /tmp/toto/toto to /tmp/toto"
-go run . -i ${projectWorkdir}/tst/.vagrant/machines/ex-0/virtualbox/private_key  vagrant@10.0.50.10:/tmp/toto/toto /tmp/toto
+go run . -i ${projectWorkdir}/tst/.vagrant/machines/ex-0/virtualbox/private_key  vagrant@192.168.56.2:/tmp/toto/toto /tmp/toto
 rc=$?
 
 if [ "$rc" != "0" ]
@@ -53,7 +53,7 @@ then
 fi
 
 echo -e "\n\n# Test 4 : Same test"
-go run . -i ${projectWorkdir}/tst/.vagrant/machines/ex-0/virtualbox/private_key  vagrant@10.0.50.10:/tmp/toto/toto /tmp/toto
+go run . -i ${projectWorkdir}/tst/.vagrant/machines/ex-0/virtualbox/private_key  vagrant@192.168.56.2:/tmp/toto/toto /tmp/toto
 rc=$?
 
 if [ "$rc" != "0" ]
@@ -64,7 +64,7 @@ fi
 
 
 echo -e "\n\n# Test 5 : recursive upload ../src to /tmp"
-go run . -i ${projectWorkdir}/tst/.vagrant/machines/ex-0/virtualbox/private_key  ../src vagrant@10.0.50.10:/tmp
+go run . -i ${projectWorkdir}/tst/.vagrant/machines/ex-0/virtualbox/private_key  ../src vagrant@192.168.56.2:/tmp
 rc=$?
 
 if [ "$rc" != "0" ]
@@ -74,7 +74,7 @@ then
 fi
 
 echo -e "\n\n# Test 6 : recursive download /tmp/src to /tmp"
-go run . -i ${projectWorkdir}/tst/.vagrant/machines/ex-0/virtualbox/private_key   vagrant@10.0.50.10:/tmp/src /tmp/src2
+go run . -i ${projectWorkdir}/tst/.vagrant/machines/ex-0/virtualbox/private_key   vagrant@192.168.56.2:/tmp/src /tmp/src2
 rc=$?
 
 if [ "$rc" != "0" ]
