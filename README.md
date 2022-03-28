@@ -26,13 +26,43 @@ go build .
 
 ## Tests
 
-The package pathh can be tested with go test.
+### go test
 
-The entire program can be tested with a VM created by vagrant
+The packages can be tested with go test.
+
+### functionnal tests
+
+The program (linux and windows) can be tested with [venom](https://github.com/ovh/venom).
+
+#### Linux
+
+You need :
+
+* vagrant
+* virtualbox
+* venom
 
 ```
-cd tst
+cd tests/linux
 vagrant up
-./tests.sh
+venom run
 ```
 
+The testsuite use directly the source (with go run ...)
+
+#### Windows
+
+You need :
+
+* vagrant
+* virtualbox
+* venom for windows
+* md5deep64.exe in the system path
+
+```
+cd tests/windows
+vagrant up
+venom run
+```
+
+This testsuite use the binary compiled (task build-windows)

@@ -1,0 +1,135 @@
+name: Exec testsuite
+
+testcases:
+
+# - name: workdir
+#   steps:
+#   - type: exec
+#     script: exit 0
+#     info: "echo {{.venom.testsuite.workdir}}"
+
+# - name: check service ssh
+#   steps:
+#   - type: exec
+#     script: |
+#       vagrant ssh ex-0 -c "sudo systemctl status sshd"
+#     assertions:
+#     - result.code ShouldEqual 0
+    
+- name: init file tst-folder
+  steps:
+  - type: exec
+    script: |
+      mkdir tst-folder
+      fsutil file createnew tst-folder\toto 10000
+      mkdir tst-folder\1 
+      mkdir tst-folder\2
+      fsutil file createnew tst-folder\1\titi 100000
+      fsutil file createnew tst-folder\2\tutu 1000000
+      cp -r tst-folder c:\temp\
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: upload file absolute path
+  steps:
+  - type: exec
+    script: |
+      .\ssftp.exe -i .\.vagrant\machines\ex-0\virtualbox\private_key c:\temp\tst-folder\toto vagrant@192.168.56.2:/tmp/toto
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: upload file absolute path to existing directory
+  steps:
+  - type: exec
+    script: |
+      vagrant ssh ex-0 -c "rm /tmp/toto"
+      vagrant ssh ex-0 -c "mkdir /tmp/toto"
+      .\ssftp.exe -i .\.vagrant\machines\ex-0\virtualbox\private_key c:\temp\tst-folder\toto vagrant@192.168.56.2:/tmp/toto
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: download file aboslute path
+  steps:
+  - type: exec
+    script: |
+      .\ssftp.exe -i .vagrant\machines\ex-0\virtualbox\private_key  vagrant@192.168.56.2:/tmp/toto/toto vm-toto
+    assertions:
+    - result.code ShouldEqual 0
+
+
+- name: redo download file aboslute path
+  steps:
+  - type: exec
+    script: |
+      .\ssftp.exe -i .vagrant\machines\ex-0\virtualbox\private_key  vagrant@192.168.56.2:/tmp/toto/toto c:\temp\toto
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: recursive upload absolute path
+  steps:
+  - type: exec
+    script: |
+      .\ssftp.exe -i .vagrant\machines\ex-0\virtualbox\private_key  c:\temp\tst-folder vagrant@192.168.56.2:/tmp
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: recursive download absolute
+  steps:
+  - type: exec
+    script: |
+      .\ssftp.exe -i .vagrant\machines\ex-0\virtualbox\private_key   vagrant@192.168.56.2:/tmp/tst-folder c:\temp\tst-folder-dl
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: recursive download local
+  steps:
+  - type: exec
+    script: |
+      .\ssftp.exe -i .vagrant\machines\ex-0\virtualbox\private_key   vagrant@192.168.56.2:/tmp/tst-folder tst-folder-dl
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: diff
+  steps:
+  - type: exec
+    script: |
+      cd tst-folder
+      ../md5deep64.exe -l .\1\titi > ../md5-ori
+      cd ../tst-folder-dl
+      ../md5deep64.exe -l .\1\titi > ../md5-dl
+      cd ..
+      comp /M md5-ori md5-dl
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: upload file with new name
+  steps:
+  - type: exec
+    script: |
+      vagrant ssh ex-0 -c "rm /tmp/toto"
+      vagrant ssh ex-0 -c "mkdir /tmp/toto"
+      .\ssftp.exe -i .\.vagrant\machines\ex-0\virtualbox\private_key c:\temp\tst-folder\toto vagrant@192.168.56.2:/tmp/toto/tutu
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: upload file with new name
+  steps:
+  - type: exec
+    script: |
+      .\ssftp.exe -i {{.venom.testsuite.workdir}}\.vagrant\machines\ex-0\virtualbox\private_key c:\temp\tst-folder\toto vagrant@192.168.56.2:/tmp/toto/tutu
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: clean
+  steps:
+  - type: exec
+    script: |
+      Remove-Item c:\temp\tst-folder -Recurse -Force
+      Remove-Item tst-folder -Recurse -Force
+      Remove-Item tst-folder-dl -Recurse -Force
+      Remove-Item c:\temp\tst-folder-dl -Recurse -Force
+      Remove-Item md5-dl
+      Remove-Item md5-ori
+      vagrant ssh ex-0 -c "rm -rf /tmp/toto /tmp/tst-folder"
+    assertions:
+    - result.code ShouldEqual 0
