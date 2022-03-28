@@ -1,0 +1,39 @@
+# https://taskfile.dev
+version: '3'
+vars:
+  BINFILE: ssftp
+
+tasks:
+  default:
+    dir: src
+    cmds:
+      - CGO_ENABLED=0 go build .
+      - upx "{{.BINFILE}}"
+    # silent: true
+    method: checksum
+    generates:
+      - "{{.BINFILE}}"
+
+  build-windows:
+    dir: src
+    cmds:
+      - CGO_ENABLED=0 GOOS=windows go build .
+      - upx "{{.BINFILE}}.exe"
+    # silent: true
+    method: checksum
+    generates:
+      - "{{.BINFILE}}.exe"
+
+  tests-linux:
+    dir: tests/linux
+    cmds:
+      - ./tests.sh
+
+  tests-windows:
+    deps:
+      - build-windows
+    cmds:
+      - mv src/ssftp.exe tests/windows
+      - curl -L https://github.com/ovh/venom/releases/download/v1.0.1/venom.windows-amd64 -o tests/windows/venom.exe
+
+    
