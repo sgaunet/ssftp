@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/sftp"
 
 	"github.com/sgaunet/ssftp/pathh"
+	"github.com/sgaunet/ssftp/ssftppkg"
 	"github.com/sirupsen/logrus"
 )
 
@@ -81,6 +82,7 @@ func main() {
 		os.Exit(1)
 	}
 	initTrace(debugLevel)
+	s := ssftppkg.NewSsftpClient(log)
 
 	// src + dest are mandatory parameters
 	if len(flag.Args()) != 2 {
@@ -108,7 +110,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// else {
 	// 	sshConfig = ssh.ClientConfig{
 	// 		User: "vagrant",
 	// 		Auth: []ssh.AuthMethod{
@@ -120,10 +121,10 @@ func main() {
 	// }
 
 	if src.IsRemote() {
-		client, err = SftpConnect(src, port, sshkeyFile)
+		client, err = s.SftpConnect(src, port, sshkeyFile)
 	}
 	if dest.IsRemote() {
-		client, err = SftpConnect(dest, port, sshkeyFile)
+		client, err = s.SftpConnect(dest, port, sshkeyFile)
 	}
 
 	if err != nil {
@@ -139,20 +140,20 @@ func main() {
 	if src.IsRemote() {
 		var isRemote bool
 		log.Debugln("src is remote")
-		isRemote, err = IsRemoteFileADir(client, src.GetFilePath())
+		isRemote, err = s.IsRemoteFileADir(client, src.GetFilePath())
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed : %s\n", err.Error())
 			os.Exit(1)
 		}
 
 		if isRemote {
-			err = recursiveDownload(client, src.GetFilePath(), dest.GetFilePath())
+			err = s.RecursiveDownload(client, src.GetFilePath(), dest.GetFilePath())
 			if err != nil {
 				log.Errorf("Failed to recursive download : %s\n", err.Error())
 				os.Exit(1)
 			}
 		} else {
-			err = downloadFile(client, src.GetFilePath(), dest.GetFilePath())
+			err = s.DownloadFile(client, src.GetFilePath(), dest.GetFilePath())
 			if err != nil {
 				log.Errorf("Failed to download file %s : %s\n", src.GetFilePath(), err.Error())
 				os.Exit(1)
@@ -163,28 +164,24 @@ func main() {
 	if dest.IsRemote() {
 		log.Debugln("dest is remote")
 		// Need info on localpath
-		infoLocalFile, err := os.Stat(src.GetFilePath())
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed : %s\n", err.Error())
-			os.Exit(1)
-		}
+		log.Debugln("src.GetFilePath()=", src.GetFilePath())
 
 		// If it's a directory, upload every files and keep the same tree
-		if infoLocalFile.IsDir() {
+		if isDirExists(src.GetFilePath()) {
 			// walk throught the tree
 			err = filepath.Walk(src.GetFilePath(),
 				func(path string, info os.FileInfo, err error) error {
 					if err != nil {
 						return errors.New("problem with local file " + path + " : " + err.Error())
 					}
-					if !info.IsDir() {
+					if !isDirExists(path) {
 						// ssftp ...  localdir  user@server:/abso
 						// ssftp ...  ./localdir  user@server:/abso
 						// baseDirSrc := filepath.Base(src.GetFilePath()) // dirname of source
 						completeRemotePath := filepath.Clean(dest.GetFilePath() + "/" + filepath.Base(src.GetFilePath()) + "/" + path[len(src.GetFilePath()):])
 						completeRemotePath = filepath.ToSlash(completeRemotePath)
 						log.Infof("Upload to : %s (size %v)\n", completeRemotePath, info.Size())
-						return uploadFile(client, path, completeRemotePath)
+						return s.UploadFile(client, path, completeRemotePath)
 					}
 					return nil
 				})
@@ -193,11 +190,43 @@ func main() {
 			}
 		} else {
 			// localpath is a simple file, upload it
-			err = uploadFile(client, src.GetFilePath(), dest.GetFilePath())
+			err = s.UploadFile(client, src.GetFilePath(), dest.GetFilePath())
 			if err != nil {
 				log.Errorf("Failed to upload file %s : %s\n", src.GetFilePath(), err.Error())
 				os.Exit(1)
 			}
 		}
 	}
+}
+
+func isDirExists(dir string) bool {
+	log.Debugf("isDirExists(%v)", dir)
+	f, err := os.Open(dir)
+	if os.IsNotExist(err) {
+		return false
+	}
+	defer f.Close()
+	i, _ := os.Stat(dir)
+	return i.IsDir()
+}
+
+func isFileExists(file string) bool {
+	log.Debugf("isFileExists(%v)", file)
+	f, err := os.Open(file)
+	if os.IsNotExist(err) {
+		return false
+	}
+	defer f.Close()
+	i, _ := os.Stat(file)
+	return !i.IsDir()
+}
+
+func isThereAFileOrDir(file string) bool {
+	log.Debugf("isThereAFileOrDir(%v)", file)
+	f, err := os.Open(file)
+	if os.IsNotExist(err) {
+		return false
+	}
+	defer f.Close()
+	return true
 }

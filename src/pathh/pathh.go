@@ -1,6 +1,7 @@
 package pathh
 
 import (
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -59,21 +60,18 @@ func (p path) GetServer() string {
 	if splitted[0] == p.path {
 		return ""
 	}
-
 	splitted = strings.Split(splitted[1], ":")
 	return splitted[0]
 }
 
 // Return the path (for a local or remote path)
 func (p path) GetFilePath() string {
-
 	if p.IsRemote() {
 		splitted := strings.Split(p.path, ":")
 		if splitted[0] == p.path {
 			return ""
 		}
-
 		return splitted[1]
 	}
-	return p.path
+	return filepath.Clean(p.path)
 }

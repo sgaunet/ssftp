@@ -1,4 +1,4 @@
-package main
+package ssftppkg
 
 import (
 	"errors"
@@ -12,10 +12,22 @@ import (
 
 	"github.com/pkg/sftp"
 	"github.com/sgaunet/ssftp/pathh"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 )
 
-func PublicKeyFile(file string) ssh.AuthMethod {
+type SsftpClient struct {
+	log *logrus.Logger
+}
+
+func NewSsftpClient(log *logrus.Logger) *SsftpClient {
+	s := SsftpClient{
+		log: log,
+	}
+	return &s
+}
+
+func (s *SsftpClient) PublicKeyFile(file string) ssh.AuthMethod {
 	buffer, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil
@@ -28,7 +40,7 @@ func PublicKeyFile(file string) ssh.AuthMethod {
 	return ssh.PublicKeys(key)
 }
 
-func listFiles(client *sftp.Client, remoteDir string) (err error) {
+func (s *SsftpClient) ListFiles(client *sftp.Client, remoteDir string) (err error) {
 	files, err := client.ReadDir(remoteDir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to list remote dir: %v\n", err)
@@ -54,9 +66,9 @@ func listFiles(client *sftp.Client, remoteDir string) (err error) {
 }
 
 // Upload file to sftp server
-func uploadFile(client *sftp.Client, localFile, remoteFile string) (err error) {
-	log.Infof("Uploading [%s] to [%s] ...\n", localFile, remoteFile)
-	log.Debugln("remoteFile=", remoteFile)
+func (s *SsftpClient) UploadFile(client *sftp.Client, localFile, remoteFile string) (err error) {
+	s.log.Infof("Uploading [%s] to [%s] ...\n", localFile, remoteFile)
+	s.log.Debugln("remoteFile=", remoteFile)
 	srcFile, err := os.Open(localFile)
 	if err != nil {
 		return errors.New("Unable to open local file" + localFile + " : " + err.Error())
@@ -65,20 +77,20 @@ func uploadFile(client *sftp.Client, localFile, remoteFile string) (err error) {
 
 	// Make remote directories recursion
 	parent := strings.ReplaceAll(filepath.Dir(remoteFile), "\\", "/")
-	log.Debugln("parent=", parent)
+	s.log.Debugln("parent=", parent)
 	pathSeparator := string("/")
 	dirs := strings.Split(parent, string(pathSeparator))
 	remotepath := ""
 	if len(dirs) == 1 {
 		remotepath = parent
-		log.Debugln("remotepath=", remotepath)
+		s.log.Debugln("remotepath=", remotepath)
 		client.Mkdir(remotepath) // should handle the error
 	} else {
 		for _, dir := range dirs {
-			log.Debugln("dir=", dir)
+			s.log.Debugln("dir=", dir)
 			remotepath = strings.ReplaceAll(remotepath+pathSeparator+dir, "\\", "/")
 			remotepath = strings.ReplaceAll(remotepath, "//", "/")
-			log.Debugln("remotepath=", remotepath)
+			s.log.Debugln("remotepath=", remotepath)
 			client.Mkdir(remotepath) // should handle the error
 
 			// log.Infoln("Create remote dir :", remotepath)
@@ -111,7 +123,7 @@ func uploadFile(client *sftp.Client, localFile, remoteFile string) (err error) {
 }
 
 // Download file from sftp server
-func downloadFile(client *sftp.Client, remoteFile, localFile string) (err error) {
+func (s *SsftpClient) DownloadFile(client *sftp.Client, remoteFile, localFile string) (err error) {
 
 	fmt.Fprintf(os.Stdout, "Downloading [%s] to [%s] ... ", remoteFile, localFile)
 
@@ -151,9 +163,9 @@ func downloadFile(client *sftp.Client, remoteFile, localFile string) (err error)
 	return
 }
 
-func SftpConnect(remote pathh.Path, port string, sshkeyFile string) (*sftp.Client, error) {
+func (s *SsftpClient) SftpConnect(remote pathh.Path, port string, sshkeyFile string) (*sftp.Client, error) {
 
-	auth := PublicKeyFile(sshkeyFile)
+	auth := s.PublicKeyFile(sshkeyFile)
 	if auth == nil {
 		panic("Key not found")
 	}
@@ -180,7 +192,7 @@ func SftpConnect(remote pathh.Path, port string, sshkeyFile string) (*sftp.Clien
 	return client, err
 }
 
-func IsRemoteFileADir(client *sftp.Client, remoteFile string) (bool, error) {
+func (s *SsftpClient) IsRemoteFileADir(client *sftp.Client, remoteFile string) (bool, error) {
 
 	info, err := client.Stat(remoteFile)
 	if err != nil {
@@ -192,7 +204,7 @@ func IsRemoteFileADir(client *sftp.Client, remoteFile string) (bool, error) {
 	return false, err
 }
 
-func recursiveDownload(client *sftp.Client, remoteFile string, localFile string) (err error) {
+func (s *SsftpClient) RecursiveDownload(client *sftp.Client, remoteFile string, localFile string) (err error) {
 	files, err := client.ReadDir(remoteFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to list remote dir: %v\n", err)
@@ -206,12 +218,12 @@ func recursiveDownload(client *sftp.Client, remoteFile string, localFile string)
 
 		if f.IsDir() {
 			name = name + "/"
-			err2 := recursiveDownload(client, remoteFile+string(os.PathSeparator)+name, localFile+string(os.PathSeparator)+name)
+			err2 := s.RecursiveDownload(client, remoteFile+"/"+name, localFile+string(os.PathSeparator)+name)
 			if err2 != nil {
 				err = errors.New("error during the recursive download")
 			}
 		} else {
-			err = downloadFile(client, remoteFile+string(os.PathSeparator)+name, localFile+string(os.PathSeparator)+name)
+			err = s.DownloadFile(client, remoteFile+"/"+name, localFile+string(os.PathSeparator)+name)
 			if err != nil {
 				err = errors.New("error during the recursive download")
 			}
