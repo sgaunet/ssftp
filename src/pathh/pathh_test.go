@@ -43,6 +43,12 @@ func TestIsRemote(t *testing.T) {
 
 	p = New("user@server:.")
 	assert.Equal(t, p.IsRemote(), true)
+
+	p = New("c:/dossier")
+	assert.Equal(t, p.IsRemote(), false)
+
+	p = New("c:\\dossier\\subfolder")
+	assert.Equal(t, p.IsRemote(), false)
 }
 
 func TestIsLocal(t *testing.T) {
