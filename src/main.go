@@ -51,6 +51,7 @@ func usage() {
 	fmt.Println("    -i : ssh key")
 	fmt.Println("    -d : debug mode")
 	fmt.Println("    -v : print version and exit")
+	fmt.Println("    -p : port")
 	fmt.Println("    src: local file/folder or distant sftp file/dir")
 	fmt.Println("    dest: same")
 	fmt.Println("\nOrder of paramters matters.")
