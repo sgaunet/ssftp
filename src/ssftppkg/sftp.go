@@ -165,28 +165,39 @@ func (s *SsftpClient) DownloadFile(client *sftp.Client, remoteFile, localFile st
 
 func (s *SsftpClient) SftpConnect(remote pathh.Path, port string, sshkeyFile string) (*sftp.Client, error) {
 
-	auth := s.PublicKeyFile(sshkeyFile)
-	if auth == nil {
-		panic("Key not found")
+	privateKey, _ := os.ReadFile(sshkeyFile)
+	// signer, err := ssh.ParseDSAPrivateKey([]byte(privateKey))
+	signer, err := ssh.ParsePrivateKey([]byte(privateKey))
+	if err != nil {
+		return nil, fmt.Errorf("error setting up SSH config: %s", err)
 	}
-	sshConfig := ssh.ClientConfig{
-		User: remote.GetUser(),
-		Auth: []ssh.AuthMethod{
-			auth,
-		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Timeout:         2 * time.Second,
-	}
+
+	authMethods := []ssh.AuthMethod{ssh.PublicKeys(signer)}
+	// auth := s.PublicKeyFile(sshkeyFile)
+	// if auth == nil {
+	// 	panic("Key not found")
+	// }
+	sshConfig := ssh.ClientConfig{}
+	sshConfig.SetDefaults()
+	sshConfig.User = remote.GetUser()
+	// sshConfig.Auth = []ssh.AuthMethod{
+	// 	auth,
+	// }
+	sshConfig.Auth = authMethods
+	sshConfig.HostKeyCallback = ssh.InsecureIgnoreHostKey()
+	sshConfig.Timeout = 2 * time.Second
+
 	// cipherOrder := sshConfig.Ciphers
-	//sshconfig.Ciphers = append(cipherOrder, "3des-cbc")
+	// sshConfig.Ciphers = append(cipherOrder, "chacha20-poly1305@openssh.com", "aes128-ctr", "aes192-ctr", "aes256-ctr", "aes128-gcm@openssh.com", "aes256-gcm@openssh.com")
+	// sshConfig.Ciphers = append(sshConfig.Ciphers, "ssh-dsa")
 
 	conn, err := ssh.Dial("tcp", remote.GetServer()+":"+port, &sshConfig)
 	if err != nil {
-		panic("Failed to dial: " + err.Error())
+		return nil, errors.New("Failed to dial: " + err.Error())
 	}
 	client, err := sftp.NewClient(conn)
 	if err != nil {
-		panic("Failed to create client: " + err.Error())
+		return nil, err
 	}
 
 	return client, err
