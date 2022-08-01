@@ -20,9 +20,8 @@ testcases:
 - name: upload file absolute path
   steps:
   - type: exec
-    dir: "{{.init.tstFolder}}/../src"
     script: |
-      cd {{.init.tstFolder}}/../src
+      cd {{.init.tstFolder}}/../../src
       go run . -i {{.init.tstFolder}}/.vagrant/machines/ex-0/virtualbox/private_key /tmp/toto vagrant@192.168.56.2:/tmp/toto
     # info: "{{ result.systemout }}"
     assertions:
@@ -31,9 +30,9 @@ testcases:
 - name: upload file absolute path to existing directory
   steps:
   - type: exec
-    dir: "{{.init.tstFolder}}/../src"
+    dir: "{{.init.tstFolder}}/../../src"
     script: |
-      cd {{.init.tstFolder}}/../src
+      cd {{.init.tstFolder}}/../../src
       ssh -i {{.init.tstFolder}}/.vagrant/machines/ex-0/virtualbox/private_key vagrant@192.168.56.2 'rm /tmp/toto' || exit 1
       echo $?
       ssh -i {{.init.tstFolder}}/.vagrant/machines/ex-0/virtualbox/private_key vagrant@192.168.56.2 'mkdir /tmp/toto'  || exit 1
@@ -47,7 +46,7 @@ testcases:
   steps:
   - type: exec
     script: |
-      cd {{.init.tstFolder}}/../src
+      cd {{.init.tstFolder}}/../../src
       go run . -i {{.init.tstFolder}}/.vagrant/machines/ex-0/virtualbox/private_key  vagrant@192.168.56.2:/tmp/toto/toto /tmp/toto
     assertions:
     - result.code ShouldEqual 0
@@ -57,7 +56,7 @@ testcases:
   steps:
   - type: exec
     script: |
-      cd {{.init.tstFolder}}/../src
+      cd {{.init.tstFolder}}/../../src
       go run . -i {{.init.tstFolder}}/.vagrant/machines/ex-0/virtualbox/private_key  vagrant@192.168.56.2:/tmp/toto/toto /tmp/toto
     assertions:
     - result.code ShouldEqual 0
@@ -66,7 +65,7 @@ testcases:
   steps:
   - type: exec
     script: |
-      cd {{.init.tstFolder}}/../src
+      cd {{.init.tstFolder}}/../../src
       go run . -i {{.init.tstFolder}}/.vagrant/machines/ex-0/virtualbox/private_key  ../src vagrant@192.168.56.2:/tmp
     assertions:
     - result.code ShouldEqual 0
@@ -75,7 +74,7 @@ testcases:
   steps:
   - type: exec
     script: |
-      cd {{.init.tstFolder}}/../src
+      cd {{.init.tstFolder}}/../../src
       go run . -i {{.init.tstFolder}}/.vagrant/machines/ex-0/virtualbox/private_key   vagrant@192.168.56.2:/tmp/src /tmp/src2
     assertions:
     - result.code ShouldEqual 0
@@ -84,7 +83,7 @@ testcases:
   steps:
   - type: exec
     script: |
-      cd {{.init.tstFolder}}/../src
+      cd {{.init.tstFolder}}/../../src
       diff -r ../src /tmp/src2
     assertions:
     - result.code ShouldEqual 0
