@@ -8,7 +8,7 @@ do
     export VENOM_VAR_keytype=${keytype}
     venom run --stop-on-failure testsuite-docker.yml 
     rc=$?
-    if [ "$rc" != "1" ]
+    if [ "$rc" != "0" ]
     then
         echo "TS Failed, exit 1"
         exit 1

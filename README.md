@@ -3,7 +3,7 @@
 sftp client tool to transfer files. 
 
 ```
-ssftp  [-d debug] -i sshkey src dest
+ssftp  [-d debug] [-p port] -i sshkey src dest
     -i : ssh key
     -d : debug mode
     -p : port
@@ -15,6 +15,12 @@ Order of parameters matters. (options before src/dest parameters)
 ```
 
 **Be carefull, the program does not check the hostkey so it's not a secure program for now.**
+
+Actually works with algorithms :
+
+* ecdsa
+* ed25519
+* rsa
 
 # Build
 

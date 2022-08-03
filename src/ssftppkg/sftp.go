@@ -67,7 +67,7 @@ func (s *SsftpClient) ListFiles(client *sftp.Client, remoteDir string) (err erro
 
 // Upload file to sftp server
 func (s *SsftpClient) UploadFile(client *sftp.Client, localFile, remoteFile string) (err error) {
-	s.log.Infof("Uploading [%s] to [%s] ...\n", localFile, remoteFile)
+	s.log.Infof("Uploading %s to %s ...", localFile, remoteFile)
 	s.log.Debugln("remoteFile=", remoteFile)
 	srcFile, err := os.Open(localFile)
 	if err != nil {
