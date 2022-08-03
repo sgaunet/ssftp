@@ -36,4 +36,11 @@ tasks:
       - mv src/ssftp.exe tests/windows
       - curl -L https://github.com/ovh/venom/releases/download/v1.0.1/venom.windows-amd64 -o tests/windows/venom.exe
 
+  
+  snapshot:
+    cmds:
+      - GITLAB_TOKEN="" goreleaser --rm-dist --snapshot
     
+  release:
+    cmds:
+      - GITLAB_TOKEN="" goreleaser --rm-dist
