@@ -33,10 +33,10 @@ func TestIsRemote(t *testing.T) {
 	assert.Equal(t, p.IsRemote(), false)
 
 	p = New("user@server")
-	assert.Equal(t, p.IsRemote(), true)
+	assert.Equal(t, p.IsRemote(), false)
 
 	p = New("user@127.0.0.1")
-	assert.Equal(t, p.IsRemote(), true)
+	assert.Equal(t, p.IsRemote(), false)
 
 	p = New("use654r@server2:dir/df")
 	assert.Equal(t, p.IsRemote(), true)
@@ -57,7 +57,7 @@ func TestIsLocal(t *testing.T) {
 	//assert.Nil(t, err)
 	assert.Equal(t, p.IsLocal(), true)
 	p = New("user@server")
-	assert.Equal(t, p.IsLocal(), false)
+	assert.Equal(t, p.IsLocal(), true)
 
 }
 
@@ -99,7 +99,7 @@ func TestGetFilePath(t *testing.T) {
 	assert.Equal(t, p.GetFilePath(), "localFile")
 
 	p = New("user@server")
-	assert.Equal(t, "", p.GetFilePath())
+	assert.Equal(t, "user@server", p.GetFilePath())
 
 	p = New("use654r@server2:dir/df")
 	assert.Equal(t, "dir/df", p.GetFilePath())
