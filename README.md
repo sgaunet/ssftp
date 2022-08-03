@@ -48,6 +48,8 @@ You need :
 cd tests/linux
 vagrant up
 venom run testsuite.yml     # to launch tests with the VM
+vagrant halt
+
 run-tests.sh                # to launch tests with a sshd in a docker image
 ```
 
