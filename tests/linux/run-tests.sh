@@ -6,6 +6,12 @@ do
     echo "**********************************"
     echo "keytype=$keytype"
     export VENOM_VAR_keytype=${keytype}
-    venom run testsuite-docker.yml 
+    venom run --stop-on-failure testsuite-docker.yml 
+    rc=$?
+    if [ "$rc" != "1" ]
+    then
+        echo "TS Failed, exit 1"
+        exit 1
+    fi
     echo ""
 done
