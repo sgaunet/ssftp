@@ -5,6 +5,7 @@ testcases:
   steps:
   - type: exec
     script: pwd
+    info: '{{.result.systemout}}'
     vars:
       tstFolder:
         from: result.systemout
@@ -14,6 +15,7 @@ testcases:
   steps:
   - type: exec
     script: dd if=/dev/urandom of=/tmp/toto  bs=1024 count=102400
+    info: dd if=/dev/urandom of=/tmp/toto  bs=1024 count=102400
     assertions:
     - result.code ShouldEqual 0
 
@@ -22,7 +24,7 @@ testcases:
   - type: exec
     script: |
       ssh-keygen -t {{.keytype}} -f keyfile -N ""
-      docker run --rm -d --name alpine-sshd -p "2222:22" -e AUTHORIZED_KEYS="$(cat keyfile.pub)" -e SSHUSER_PASSWORD=sshpassword -e DATA_FOLDERS="folder1 folder2 folder" sgaunet/alpine-sshd:latest
+      docker run --rm -d --name alpine-sshd -p "2222:22" -e AUTHORIZED_KEYS="$(cat keyfile.pub)" -e SSHUSER_PASSWORD=sshpassword -e DATA_FOLDERS="folder1 folder2 folder" sgaunet/alpine-sshd:0.2
       sleep 5
     assertions:
     - result.code ShouldEqual 0
