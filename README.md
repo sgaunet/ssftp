@@ -1,11 +1,12 @@
 # ssftp
 
-sftp client tool to transfer file. 
+sftp client tool to transfer files. 
 
 ```
 ssftp  [-d debug] -i sshkey src dest
     -i : ssh key
     -d : debug mode
+    -p : port
     -v : print version and exit
     src: local file/folder or distant sftp file/dir
     dest: same
@@ -41,11 +42,13 @@ You need :
 * vagrant
 * virtualbox
 * venom
+* docker
 
 ```
 cd tests/linux
 vagrant up
-venom run
+venom run testsuite.yml     # to launch tests with the VM
+run-tests.sh                # to launch tests with a sshd in a docker image
 ```
 
 The testsuite use directly the source (with go run ...)
