@@ -24,7 +24,7 @@ testcases:
   - type: exec
     script: |
       ssh-keygen -t {{.keytype}} -f keyfile -N ""
-      docker run --rm -d --name alpine-sshd -p "2222:22" -e AUTHORIZED_KEYS="$(cat keyfile.pub)" -e SSHUSER_PASSWORD=sshpassword -e DATA_FOLDERS="folder1 folder2 folder" sgaunet/alpine-sshd:0.2
+      docker run --rm -d --name alpine-sshd -p "2222:22" -e AUTHORIZED_KEYS="$(cat keyfile.pub)" -e SSHUSER_PASSWORD=sshpassword -e DATA_FOLDERS="folder1 folder2 folder" sgaunet/alpine-sshd:0.3-alpine-3.16.1
       sleep 5
     assertions:
     - result.code ShouldEqual 0
