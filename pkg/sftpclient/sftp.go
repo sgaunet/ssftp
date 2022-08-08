@@ -1,4 +1,4 @@
-package ssftppkg
+package sftpclient
 
 import (
 	"encoding/base64"
@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/pkg/sftp"
-	"github.com/sgaunet/ssftp/pathh"
+	"github.com/sgaunet/ssftp/pkg/sftppath"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 	kh "golang.org/x/crypto/ssh/knownhosts"
@@ -200,7 +200,7 @@ func (s *SsftpClient) DownloadFile(client *sftp.Client, remoteFile, localFile st
 	return
 }
 
-func (s *SsftpClient) SftpConnect(remote pathh.Path, port string, sshkeyFile string) (*sftp.Client, error) {
+func (s *SsftpClient) SftpConnect(remote sftppath.Path, port string, sshkeyFile string) (*sftp.Client, error) {
 	privateKey, _ := os.ReadFile(sshkeyFile)
 	signer, err := ssh.ParsePrivateKey([]byte(privateKey))
 	if err != nil {

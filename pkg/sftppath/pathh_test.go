@@ -1,4 +1,4 @@
-package pathh
+package sftppath
 
 import (
 	"os"

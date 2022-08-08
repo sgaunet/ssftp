@@ -9,8 +9,9 @@ import (
 
 	"github.com/pkg/sftp"
 
-	"github.com/sgaunet/ssftp/pathh"
-	"github.com/sgaunet/ssftp/ssftppkg"
+	"github.com/sgaunet/ssftp/pkg/sftpclient"
+	"github.com/sgaunet/ssftp/pkg/sftppath"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -41,7 +42,7 @@ func main() {
 	var debugLevel string
 	var port string
 	var vOption bool
-	var sshOpts ssftppkg.SshOptions
+	var sshOpts sftpclient.SshOptions
 	// Parameters treatment (except src + dest)
 	flag.StringVar(&sshkeyFile, "i", "", "SSH key File")
 	flag.StringVar(&debugLevel, "d", "info", "Debug level (info,warn,debug)")
@@ -61,7 +62,7 @@ func main() {
 		os.Exit(1)
 	}
 	initTrace(debugLevel)
-	s, err := ssftppkg.NewSsftpClient(log, sshOpts)
+	s, err := sftpclient.NewSsftpClient(log, sshOpts)
 	if err != nil {
 		log.Errorf(err.Error())
 		os.Exit(1)
@@ -75,8 +76,8 @@ func main() {
 
 	// Parameters treatment : src + dest
 	args := flag.Args()
-	src := pathh.New(args[0])
-	dest := pathh.New(args[1])
+	src := sftppath.New(args[0])
+	dest := sftppath.New(args[1])
 
 	if src.IsRemote() && dest.IsRemote() {
 		log.Errorf("Cannot transfer from one server to the other\n")

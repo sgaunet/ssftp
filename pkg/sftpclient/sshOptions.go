@@ -1,4 +1,4 @@
-package ssftppkg
+package sftpclient
 
 import "strings"
 
