@@ -17,6 +17,13 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
 
+- name: Add fingerprint
+  steps:
+  - type: exec
+    script: ssh-keyscan -H 192.168.56.2  > ~/.ssh/known_hosts    # To add the fingerprint
+    assertions:
+    - result.code ShouldEqual 0
+
 - name: upload file absolute path
   steps:
   - type: exec

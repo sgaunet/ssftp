@@ -16,30 +16,6 @@ import (
 
 var log = logrus.New()
 
-func initTrace(debugLevel string) {
-	// Log as JSON instead of the default ASCII formatter.
-	//log.SetFormatter(&log.JSONFormatter{})
-	// log.SetFormatter(&log.TextFormatter{
-	// 	DisableColors: true,
-	// 	FullTimestamp: true,
-	// })
-
-	// Output to stdout instead of the default stderr
-	// Can be any io.Writer, see below for File example
-	log.SetOutput(os.Stdout)
-
-	switch debugLevel {
-	case "info":
-		log.SetLevel(logrus.InfoLevel)
-	case "warn":
-		log.SetLevel(logrus.WarnLevel)
-	case "error":
-		log.SetLevel(logrus.ErrorLevel)
-	default:
-		log.SetLevel(logrus.DebugLevel)
-	}
-}
-
 var version string = "development"
 
 func printVersion() {
@@ -65,9 +41,11 @@ func main() {
 	var debugLevel string
 	var port string
 	var vOption bool
+	var sshOpts ssftppkg.SshOptions
 	// Parameters treatment (except src + dest)
 	flag.StringVar(&sshkeyFile, "i", "", "SSH key File")
 	flag.StringVar(&debugLevel, "d", "info", "Debug level (info,warn,debug)")
+	flag.Var(&sshOpts, "o", "Options (Ex: StrictHostKeyChecking=no) ")
 	flag.StringVar(&port, "p", "22", "Port number")
 	flag.BoolVar(&vOption, "v", false, "Get version")
 	flag.Parse()
@@ -83,7 +61,11 @@ func main() {
 		os.Exit(1)
 	}
 	initTrace(debugLevel)
-	s := ssftppkg.NewSsftpClient(log)
+	s, err := ssftppkg.NewSsftpClient(log, sshOpts)
+	if err != nil {
+		log.Errorf(err.Error())
+		os.Exit(1)
+	}
 
 	// src + dest are mandatory parameters
 	if len(flag.Args()) != 2 {

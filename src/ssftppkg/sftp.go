@@ -1,10 +1,13 @@
 package ssftppkg
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,17 +17,51 @@ import (
 	"github.com/sgaunet/ssftp/pathh"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
+	kh "golang.org/x/crypto/ssh/knownhosts"
 )
 
+const StrictHostKeyCheckingNameParameter = "StrictHostKeyChecking"
+
 type SsftpClient struct {
-	log *logrus.Logger
+	log             *logrus.Logger
+	hostKeyChecking bool
 }
 
-func NewSsftpClient(log *logrus.Logger) *SsftpClient {
+func NewSsftpClient(log *logrus.Logger, sshOpts SshOptions) (*SsftpClient, error) {
 	s := SsftpClient{
 		log: log,
 	}
-	return &s
+	s.hostKeyChecking = true // Default behaviour
+
+	for _, opt := range sshOpts {
+		err := s.SetOption(opt)
+		if err != nil {
+			return &s, err
+		}
+	}
+	return &s, nil
+}
+
+// SetOption is waiting for parameter with this format option=value
+func (s *SsftpClient) SetOption(param string) error {
+	splitted := strings.Split(param, "=")
+	if len(splitted) != 2 {
+		return errors.New("sshOption should have the format : param=value")
+	}
+	parameter := splitted[0]
+	value := splitted[1]
+	switch parameter {
+	case StrictHostKeyCheckingNameParameter:
+		if value == "yes" {
+			s.log.Debugln("Option hostKeyChecking=true")
+			s.hostKeyChecking = true
+		} else {
+			s.hostKeyChecking = false
+		}
+	default:
+		return errors.New("Unknown option" + param)
+	}
+	return nil
 }
 
 func (s *SsftpClient) PublicKeyFile(file string) ssh.AuthMethod {
@@ -164,9 +201,7 @@ func (s *SsftpClient) DownloadFile(client *sftp.Client, remoteFile, localFile st
 }
 
 func (s *SsftpClient) SftpConnect(remote pathh.Path, port string, sshkeyFile string) (*sftp.Client, error) {
-
 	privateKey, _ := os.ReadFile(sshkeyFile)
-	// signer, err := ssh.ParseDSAPrivateKey([]byte(privateKey))
 	signer, err := ssh.ParsePrivateKey([]byte(privateKey))
 	if err != nil {
 		return nil, fmt.Errorf("error setting up SSH config: %s", err)
@@ -184,13 +219,20 @@ func (s *SsftpClient) SftpConnect(remote pathh.Path, port string, sshkeyFile str
 	// 	auth,
 	// }
 	sshConfig.Auth = authMethods
-	sshConfig.HostKeyCallback = ssh.InsecureIgnoreHostKey()
+	if s.hostKeyChecking {
+		s.log.Debugln("hostKeyChecking=true")
+		hostKeyCallback, err := kh.New(fmt.Sprintf("%s/.ssh/known_hosts", os.Getenv("HOME")))
+		if err != nil {
+			log.Fatal("could not create hostkeycallback function: ", err)
+		}
+		sshConfig.HostKeyCallback = hostKeyCallback
+	} else {
+		s.log.Debugln("hostKeyChecking=false")
+		sshConfig.HostKeyCallback = ssh.InsecureIgnoreHostKey()
+	}
+	// sshConfig.HostKeyCallback = KeyPrint
+
 	sshConfig.Timeout = 2 * time.Second
-
-	// cipherOrder := sshConfig.Ciphers
-	// sshConfig.Ciphers = append(cipherOrder, "chacha20-poly1305@openssh.com", "aes128-ctr", "aes192-ctr", "aes256-ctr", "aes128-gcm@openssh.com", "aes256-gcm@openssh.com")
-	// sshConfig.Ciphers = append(sshConfig.Ciphers, "ssh-dsa")
-
 	conn, err := ssh.Dial("tcp", remote.GetServer()+":"+port, &sshConfig)
 	if err != nil {
 		return nil, errors.New("Failed to dial: " + err.Error())
@@ -242,4 +284,36 @@ func (s *SsftpClient) RecursiveDownload(client *sftp.Client, remoteFile string, 
 	}
 
 	return
+}
+
+// func fingerprintCallback(opts *ssh.Config, expectedFingerprint string) ssh.HostKeyCallback {
+// 	if opts.SkipHostValidation {
+// 		return nil
+// 	}
+
+// 	return func(hostname string, remote net.Addr, key ssh.PublicKey) error {
+// 		switch len(expectedFingerprint) {
+// 		case helpers.SHA1_FINGERPRINT_LENGTH:
+// 			fingerprint := helpers.SHA1Fingerprint(key)
+// 			if fingerprint != expectedFingerprint {
+// 				return fmt.Errorf("Host key verification failed.\n\nThe fingerprint of the received key was %q.", fingerprint)
+// 			}
+// 		case helpers.MD5_FINGERPRINT_LENGTH:
+// 			fingerprint := helpers.MD5Fingerprint(key)
+// 			if fingerprint != expectedFingerprint {
+// 				return fmt.Errorf("Host key verification failed.\n\nThe fingerprint of the received key was %q.", fingerprint)
+// 			}
+// 		case 0:
+// 			fingerprint := helpers.MD5Fingerprint(key)
+// 			return fmt.Errorf("Unable to verify identity of host.\n\nThe fingerprint of the received key was %q.", fingerprint)
+// 		default:
+// 			return errors.New("Unsupported host key fingerprint format")
+// 		}
+// 		return nil
+// 	}
+// }
+
+func KeyPrint(dialAddr string, addr net.Addr, key ssh.PublicKey) error {
+	fmt.Printf("%s %s %s\n", strings.Split(dialAddr, ":")[0], key.Type(), base64.StdEncoding.EncodeToString(key.Marshal()))
+	return nil
 }

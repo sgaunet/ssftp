@@ -4,17 +4,22 @@ sftp client tool to transfer files.
 
 ```
 ssftp  [-d debug] [-p port] -i sshkey src dest
-    -i : ssh key
-    -d : debug mode
-    -p : port
-    -v : print version and exit
+  -d string
+        Debug level (info,warn,debug) (default "info")
+  -i string
+        SSH key File
+  -o value
+        Options (Ex: StrictHostKeyChecking=no) 
+  -p string
+        Port number (default "22")
+  -v    Get version
     src: local file/folder or distant sftp file/dir
     dest: same
 
 Order of parameters matters. (options before src/dest parameters)
 ```
 
-**Be carefull, the program does not check the hostkey so it's not a secure program for now.**
+Program checks the host key fingerprint by default. Add : -o StrictHostKeyChecking=no to disable the check.
 
 Actually works with algorithms :
 
