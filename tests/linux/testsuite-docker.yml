@@ -26,6 +26,33 @@ testcases:
       ssh-keygen -t {{.keytype}} -f keyfile -N ""
       docker run --rm -d --name alpine-sshd -p "2222:22" -e AUTHORIZED_KEYS="$(cat keyfile.pub)" -e SSHUSER_PASSWORD=sshpassword -e DATA_FOLDERS="folder1 folder2 folder" sgaunet/alpine-sshd:0.3-alpine-3.16.1
       sleep 1
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: send file shoudl not work no host fingerprint in know_host file
+  steps:
+  - type: exec
+    script: |
+      rm ~/.ssh/known_hosts 
+      touch ~/.ssh/known_hosts
+      cd "{{.init.tstFolder}}/../../src"
+      go run . -i {{.init.tstFolder}}/keyfile -p 2222 /tmp/toto sshuser@127.0.0.1:/tmp/toto
+    assertions:
+    - result.code ShouldNotEqual 0
+
+- name: send file shoudl work option ...
+  steps:
+  - type: exec
+    script: |
+      cd "{{.init.tstFolder}}/../../src"
+      go run . -i {{.init.tstFolder}}/keyfile -p 2222 -o StrictHostKeyChecking=no /tmp/toto sshuser@127.0.0.1:/tmp/toto
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: ssh-keyscan to add fingerprint
+  steps:
+  - type: exec
+    script: |
       ssh-keyscan -p2222 -H 127.0.0.1  > ~/.ssh/known_hosts    # To add the fingerprint
     assertions:
     - result.code ShouldEqual 0
