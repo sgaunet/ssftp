@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+echo "TESTS with docker"
+
 # for keytype in dsa ecdsa ed25519 rsa
 for keytype in ecdsa ed25519 rsa
 do
@@ -15,3 +17,9 @@ do
     fi
     echo ""
 done
+
+echo "TESTS with vagrant"
+vagrant up
+venom run testsuite-vagrant.yml
+vagrant destroy -f
+

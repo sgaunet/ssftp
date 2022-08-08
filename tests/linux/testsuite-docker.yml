@@ -35,7 +35,7 @@ testcases:
     script: |
       rm ~/.ssh/known_hosts 
       touch ~/.ssh/known_hosts
-      cd "{{.init.tstFolder}}/../../src"
+      cd "{{.init.tstFolder}}/../../"
       go run . -i {{.init.tstFolder}}/keyfile -p 2222 /tmp/toto sshuser@127.0.0.1:/tmp/toto
     assertions:
     - result.code ShouldNotEqual 0
@@ -44,7 +44,7 @@ testcases:
   steps:
   - type: exec
     script: |
-      cd "{{.init.tstFolder}}/../../src"
+      cd "{{.init.tstFolder}}/../../"
       go run . -i {{.init.tstFolder}}/keyfile -p 2222 -o StrictHostKeyChecking=no /tmp/toto sshuser@127.0.0.1:/tmp/toto
     assertions:
     - result.code ShouldEqual 0
@@ -61,7 +61,7 @@ testcases:
   steps:
   - type: exec
     script: |
-      cd "{{.init.tstFolder}}/../../src"
+      cd "{{.init.tstFolder}}/../../"
       go run . -i {{.init.tstFolder}}/keyfile -p 2222 /tmp/toto sshuser@127.0.0.1:/tmp/toto
     assertions:
     - result.code ShouldEqual 0
