@@ -9,11 +9,11 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/src",
+            "program": "${workspaceFolder}/",
             // "args": ["-i" ,"${workspaceFolder}/tst/.vagrant/machines/ex-0/virtualbox/private_key",
             //     "${workspaceFolder}/LICENSE" ,"vagrant@10.0.50.10:/tmp" ]
-                "args": ["-i" ,"${workspaceFolder}/tst/.vagrant/machines/ex-0/virtualbox/private_key",
-                    "vagrant@10.0.50.10:/tmp/src" ,"/tmp/src2" ] 
+                "args": ["-i" ,"${workspaceFolder}/tests/linux/.vagrant/machines/ex-0/virtualbox/private_key",
+                    "vagrant@192.168.56.2:/tmp/titi" ,"/tmp/src2" ] 
         }
     ]
 }

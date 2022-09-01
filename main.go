@@ -164,7 +164,7 @@ func main() {
 						// baseDirSrc := filepath.Base(src.GetFilePath()) // dirname of source
 						completeRemotePath := filepath.Clean(dest.GetFilePath() + "/" + filepath.Base(src.GetFilePath()) + "/" + path[len(src.GetFilePath()):])
 						completeRemotePath = filepath.ToSlash(completeRemotePath)
-						log.Infof("Upload to : %s (size %v)\n", completeRemotePath, info.Size())
+						// log.Infof("Upload to : %s (size %v)\n", completeRemotePath, info.Size())
 						return s.UploadFile(client, path, completeRemotePath)
 					}
 					return nil

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/pkg/sftp"
+	"github.com/schollz/progressbar/v3"
 	"github.com/sgaunet/ssftp/pkg/sftppath"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
@@ -104,13 +105,19 @@ func (s *SsftpClient) ListFiles(client *sftp.Client, remoteDir string) (err erro
 
 // Upload file to sftp server
 func (s *SsftpClient) UploadFile(client *sftp.Client, localFile, remoteFile string) (err error) {
-	s.log.Infof("Uploading %s to %s ...", localFile, remoteFile)
+	// s.log.Infof("Uploading %s to %s ...", localFile, remoteFile)
 	s.log.Debugln("remoteFile=", remoteFile)
 	srcFile, err := os.Open(localFile)
 	if err != nil {
 		return errors.New("Unable to open local file" + localFile + " : " + err.Error())
 	}
 	defer srcFile.Close()
+
+	// get size file
+	fi, err := srcFile.Stat()
+	if err != nil {
+		return err
+	}
 
 	// Make remote directories recursion
 	parent := strings.ReplaceAll(filepath.Dir(remoteFile), "\\", "/")
@@ -149,12 +156,17 @@ func (s *SsftpClient) UploadFile(client *sftp.Client, localFile, remoteFile stri
 	}
 	defer dstFile.Close()
 
-	bytes, err := io.Copy(dstFile, srcFile)
+	bar := progressbar.DefaultBytes(
+		fi.Size(),
+		fmt.Sprintf("uploading %s", localFile),
+	)
+	_, err = io.Copy(io.MultiWriter(dstFile, bar), srcFile)
+	// bytes, err := io.Copy(dstFile, srcFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "\nUnable to upload local file: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Fprintf(os.Stdout, "(%d bytes copied)\n", bytes)
+	// fmt.Fprintf(os.Stdout, "(%d bytes copied)\n", bytes)
 
 	return
 }
@@ -170,6 +182,11 @@ func (s *SsftpClient) DownloadFile(client *sftp.Client, remoteFile, localFile st
 		return
 	}
 	defer srcFile.Close()
+
+	fi, err := srcFile.Stat()
+	if err != nil {
+		return err
+	}
 
 	// Check if dir exists
 	dir := filepath.Dir(localFile)
@@ -190,12 +207,18 @@ func (s *SsftpClient) DownloadFile(client *sftp.Client, remoteFile, localFile st
 	}
 	defer dstFile.Close()
 
-	bytes, err := io.Copy(dstFile, srcFile)
+	bar := progressbar.DefaultBytes(
+		fi.Size(),
+		fmt.Sprintf("downloading %s", remoteFile),
+	)
+	_, err = io.Copy(io.MultiWriter(dstFile, bar), srcFile)
+
+	// bytes, err := io.Copy(dstFile, srcFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "\nUnable to download remote file: %v\n", err)
 		return
 	}
-	fmt.Fprintf(os.Stdout, "(%d bytes copied)w\n", bytes)
+	// fmt.Fprintf(os.Stdout, "(%d bytes copied)w\n", bytes)
 
 	return
 }
@@ -266,16 +289,16 @@ func (s *SsftpClient) RecursiveDownload(client *sftp.Client, remoteFile string, 
 	}
 
 	for _, f := range files {
-		var name string
-		name = f.Name()
+		name := f.Name()
 
 		if f.IsDir() {
-			name = name + "/"
+			// name = name + "/"
 			err2 := s.RecursiveDownload(client, remoteFile+"/"+name, localFile+string(os.PathSeparator)+name)
 			if err2 != nil {
 				err = errors.New("error during the recursive download")
 			}
 		} else {
+			// fmt.Println("mkdir", localFile)
 			err = s.DownloadFile(client, remoteFile+"/"+name, localFile+string(os.PathSeparator)+name)
 			if err != nil {
 				err = errors.New("error during the recursive download")
