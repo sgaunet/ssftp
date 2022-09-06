@@ -288,6 +288,10 @@ func (s *SsftpClient) RecursiveDownload(client *sftp.Client, remoteFile string, 
 		return
 	}
 
+	err = os.Mkdir(localFile, 0750)
+	if err != nil {
+		return err
+	}
 	for _, f := range files {
 		name := f.Name()
 
@@ -298,7 +302,6 @@ func (s *SsftpClient) RecursiveDownload(client *sftp.Client, remoteFile string, 
 				err = errors.New("error during the recursive download")
 			}
 		} else {
-			// fmt.Println("mkdir", localFile)
 			err = s.DownloadFile(client, remoteFile+"/"+name, localFile+string(os.PathSeparator)+name)
 			if err != nil {
 				err = errors.New("error during the recursive download")
