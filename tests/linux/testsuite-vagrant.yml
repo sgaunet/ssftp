@@ -95,11 +95,40 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
 
+- name: recursive download
+  steps:
+  - type: exec
+    script: |
+      cd {{.init.tstFolder}}/../../
+      go run . -i {{.init.tstFolder}}/.vagrant/machines/ex-0/virtualbox/private_key   vagrant@192.168.56.2:/tmp/windows /tmp/windows2
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: recursive upload
+  steps:
+  - type: exec
+    script: |
+      cd {{.init.tstFolder}}/../../
+      go run . -i {{.init.tstFolder}}/.vagrant/machines/ex-0/virtualbox/private_key   tests vagrant@192.168.56.2:/tmp/tests 
+    assertions:
+    - result.code ShouldEqual 0
+
+
+- name: recursive download
+  steps:
+  - type: exec
+    script: |
+      cd {{.init.tstFolder}}/../../
+      go run . -i {{.init.tstFolder}}/.vagrant/machines/ex-0/virtualbox/private_key   vagrant@192.168.56.2:/tmp/tests /tmp/tests
+    assertions:
+    - result.code ShouldEqual 0
+
+
 - name: clean
   steps:
   - type: exec
     script: |
-      rm -rf /tmp/windows
+      rm -rf /tmp/windows /tmp/windows2 /tmp/tests
     assertions:
     - result.code ShouldEqual 0
 
