@@ -1,5 +1,9 @@
 # ssftp
 
+**This project is for test only**
+
+[If you search a tool to make sftp transfer with static compilation, try rclone.](https://rclone.org/)
+
 sftp client tool to transfer files. 
 
 ```
