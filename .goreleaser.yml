@@ -16,20 +16,6 @@ builds:
     goos:
       - linux
       - darwin
-    goarch:
-      - amd64
-      - arm
-      - arm64
-    hooks:
-      post:
-        - upx "{{ .Path }}"
-  - env:
-      - CGO_ENABLED=0
-    # dir: src
-    id: ssftp-win
-    ldflags:
-      - -X main.version={{.Version}}
-    goos:
       - windows
     goarch:
       - amd64
